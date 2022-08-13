@@ -11,7 +11,8 @@ class DataA(db.Model):
     # value_date date,
     # info varchar(100)
     file_key      = db.Column(db.String(), primary_key=True) 
-    sheet_name    = db.Column(db.String(), primary_key=True) 
+    sheet_idx     = db.Column(db.Integer, primary_key=True) 
+    sheet_name    = db.Column(db.String(), primary_key=False) 
     row_id        = db.Column(db.Integer, primary_key=True) 
     col_id        = db.Column(db.Integer, primary_key=True) 
     col_key       = db.Column(db.String(), primary_key=False) 

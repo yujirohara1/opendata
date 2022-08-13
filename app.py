@@ -99,8 +99,8 @@ def load_user(user_id):
   login_user(uuser)
   return uuser
 
-# db_uri = "postgresql://postgres:yjrhr1102@localhost:5432/newdb3" #開発用aa
-db_uri = os.environ.get('DATABASE_URL') #本番用HEROKU_POSTGRESQL_COBALTHEROKU_POSTGRESQL_DIANA_URL
+db_uri = "postgresql://postgres:yjrhr1102@localhost:5432/newdb3" #開発用aa
+# db_uri = os.environ.get('DATABASE_URL') #本番用HEROKU_POSTGRESQL_COBALTHEROKU_POSTGRESQL_DIANA_URL
 app.config['SQLALCHEMY_DATABASE_URI'] = db_uri 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -1530,8 +1530,8 @@ def getHotOrColdSammary(projectId, year, issueStatus):
 def getRandomKey():
    return datetime.datetime.now().strftime('%Y%m%d%H%M%S%f') + "_" + str(random.randint(1, 9999999999999999))
 
-@app.route('/updateFiles',methods=["PUT"])
-def updateFiles():
+@app.route('/uploadFiles',methods=["PUT"])
+def uploadFiles():
   files = request.files['excelFile']
   idx = len(files.filename.split("."))-1
   extention = files.filename.split(".")[idx]
@@ -1540,12 +1540,14 @@ def updateFiles():
   xlFile = pd.read_excel(files, sheet_name=None)
 
   retList = []
-
+  shidx = 0
   for sh in xlFile:
+    shidx = shidx + 1
     retList.append(
       {
         "rowSize":str(xlFile[sh].values.shape[0]),
         "colSize":str(xlFile[sh].values.shape[1]),
+        "sheetIdx":shidx,
         "sheetName":sh,
         "fileName":filename
       }
@@ -1554,8 +1556,8 @@ def updateFiles():
   return jsonify({'data': json.dumps(retList)})
 
 
-@app.route('/collectSheetData/<fileName>/<sheetName>/<rowId>')
-def collectSheetData(fileName, sheetName, rowId):
+@app.route('/collectSheetData/<fileName>/<sheetIdx>/<sheetName>/<rowId>')
+def collectSheetData(fileName, sheetIdx, sheetName, rowId):
   sheet = pd.read_excel("tmp/"+fileName, sheetName)
   colId = 0
 
@@ -1569,6 +1571,7 @@ def collectSheetData(fileName, sheetName, rowId):
     # a = str(cell)
     dataA = DataA()
     dataA.file_key = fileName
+    dataA.sheet_idx = sheetIdx
     dataA.sheet_name = sheetName
     dataA.row_id = rowId
     dataA.col_id = colId
@@ -1581,6 +1584,7 @@ def collectSheetData(fileName, sheetName, rowId):
   retList.append(
     {
       "fileName" : fileName, 
+      "sheetIdx" : sheetIdx, 
       "sheetName" : sheetName, 
       "rowId" : rowId
     }

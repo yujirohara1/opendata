@@ -1,15 +1,15 @@
 drop table data_a;
 
 create table data_a (
-    file_key varchar(100),
-    sheet_name varchar(100),
+    file_key varchar(1000),
+    sheet_name varchar(1000),
     row_id int,
     col_id integer,
     col_key varchar(3),
-    value_char varchar(100),
+    value_char varchar(1000),
     value_num int,
     value_date date,
-    info varchar(100)
+    info varchar(1000)
 );
 
 

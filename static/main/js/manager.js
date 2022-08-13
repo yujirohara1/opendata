@@ -14,7 +14,7 @@ document.getElementById("btnFileImport").addEventListener('click', function() {
   let formData = new FormData();
   formData.append('excelFile', files[0]);
 
-  fetch('/updateFiles', {
+  fetch('/uploadFiles', {
     method: 'PUT',
     body: formData,
   })
@@ -38,8 +38,9 @@ document.getElementById("btnFileImport").addEventListener('click', function() {
       td1.innerText = list[i].sheetName; // "a"; //list[i].user_name=="" ? list[i].assigned_to:list[i].user_name;
       td2.innerText = list[i].colSize; // "a"; //list[i].user_name=="" ? list[i].assigned_to:list[i].user_name;
       td3.innerText = list[i].rowSize; // "a"; //list[i].user_name=="" ? list[i].assigned_to:list[i].user_name;
-      td4.appendChild(buttonHtmlCollectData(list[i].fileName, list[i].sheetName, list[i].rowSize));
       td5.innerText = "";
+      td5.id = "tdImportStatus_" + i;
+      td4.appendChild(buttonHtmlCollectData(list[i].fileName, list[i].sheetIdx, list[i].sheetName, list[i].rowSize, td5.id));
       td1.classList.add("tdcell-left");
       td2.classList.add("tdcell-center");
       td3.classList.add("tdcell-center");
@@ -178,7 +179,7 @@ function setAttributes(dom, str){
 
 
 
-function buttonHtmlCollectData(fileName, sheetName, rowSize){
+function buttonHtmlCollectData(fileName, sheetIdx, sheetName, rowSize, statusObjId){
   //%a#btnGetMaxNo.btn.btn-dark.btn-sm(type="button")
   var btn = document.createElement('a');
   btn.classList.add("btn","btn-primary","btn-sm");
@@ -191,25 +192,26 @@ function buttonHtmlCollectData(fileName, sheetName, rowSize){
 
   btn.addEventListener('click', function() {
     event.target.classList.add("disabled");
-    hoge(fileName, sheetName, rowSize, 0);
+    collectSheetData(fileName, sheetIdx, sheetName, rowSize, statusObjId, 0);
     
   });
   return btn;
 }
 
-function hoge(fileName, sheetName, rowSize, rowId){
-  fetch('/collectSheetData/' + fileName + "/" + sheetName + "/" + rowId, {
+function collectSheetData(fileName, sheetIdx, sheetName, rowSize, statusObjId, rowId){
+  fetch('/collectSheetData/' + fileName + "/" + sheetIdx + "/" + sheetName + "/" + rowId, {
     method: 'GET',
     'Content-Type': 'application/json'
   })
   .then(res => res.json())
   .then(jsonData => {
     var list = JSON.parse(jsonData.data);
+    document.getElementById(statusObjId).innerText = rowId + 1;
     //alert(list[0].rowId);
     if(list[0].rowId >= (rowSize-1)){
       return;
     }else{
-      hoge(list[0].fileName, list[0].sheetName, rowSize, Number(list[0].rowId)+1);
+      collectSheetData(list[0].fileName, list[0].sheetIdx, list[0].sheetName, rowSize, statusObjId, Number(list[0].rowId)+1);
     }
     // if(value==0){
     //   SetAllDisabledDutyList();
@@ -217,6 +219,7 @@ function hoge(fileName, sheetName, rowSize, rowId){
     // }
   })
   .catch(error => { 
+    console.log(error)
     //document.getElementById("divLabelProcessing0").innerText = error;//console.log(error); 
     //openErrorMessageDialog(error);
     alert(1);
