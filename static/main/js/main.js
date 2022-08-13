@@ -1667,6 +1667,7 @@ function buttonHtmlUpdateDutyMember(dutyDate){
   });
   return btn;
 }
+
 function buttonHtmlUserGet(userId){
   //%a#btnGetMaxNo.btn.btn-dark.btn-sm(type="button")
   var btn = document.createElement('a');

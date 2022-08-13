@@ -15,6 +15,7 @@ from models.dailyissues import DailyIssues, DailyIssuesSchema
 from models.issue_subjects import IssueSubjects, IssueSubjectsSchema
 from models.env_variable import EnvVariable, EnvVariableSchema
 from models.duty_members import DutyMembers, DutyMembersSchema
+from models.dataa import DataA, DataASchema
 
 from sqlalchemy.sql import text
 from sqlalchemy import distinct
@@ -98,8 +99,8 @@ def load_user(user_id):
   login_user(uuser)
   return uuser
 
-db_uri = "postgresql://postgres:yjrhr1102@localhost:5432/newdb3" #開発用aa
-# db_uri = os.environ.get('HEROKU_POSTGRESQL_MAROON_URL') #本番用HEROKU_POSTGRESQL_COBALTHEROKU_POSTGRESQL_DIANA_URL
+# db_uri = "postgresql://postgres:yjrhr1102@localhost:5432/newdb3" #開発用aa
+db_uri = os.environ.get('DATABASE_URL') #本番用HEROKU_POSTGRESQL_COBALTHEROKU_POSTGRESQL_DIANA_URL
 app.config['SQLALCHEMY_DATABASE_URI'] = db_uri 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -1526,6 +1527,98 @@ def getHotOrColdSammary(projectId, year, issueStatus):
   return jsonify({'data': json.dumps(resultset,default=decimal_default_proc)})
 
 
+def getRandomKey():
+   return datetime.datetime.now().strftime('%Y%m%d%H%M%S%f') + "_" + str(random.randint(1, 9999999999999999))
+
+@app.route('/updateFiles',methods=["PUT"])
+def updateFiles():
+  files = request.files['excelFile']
+  idx = len(files.filename.split("."))-1
+  extention = files.filename.split(".")[idx]
+  filename = getRandomKey() + "." + extention
+  files.save('tmp/' + filename)
+  xlFile = pd.read_excel(files, sheet_name=None)
+
+  retList = []
+
+  for sh in xlFile:
+    retList.append(
+      {
+        "rowSize":str(xlFile[sh].values.shape[0]),
+        "colSize":str(xlFile[sh].values.shape[1]),
+        "sheetName":sh,
+        "fileName":filename
+      }
+    )
+
+  return jsonify({'data': json.dumps(retList)})
+
+
+@app.route('/collectSheetData/<fileName>/<sheetName>/<rowId>')
+def collectSheetData(fileName, sheetName, rowId):
+  sheet = pd.read_excel("tmp/"+fileName, sheetName)
+  colId = 0
+
+  if rowId == "0":
+    row = sheet.columns
+  else:
+    row = sheet.values[int(rowId)]
+
+  for cell in row:
+    colId = colId + 1
+    # a = str(cell)
+    dataA = DataA()
+    dataA.file_key = fileName
+    dataA.sheet_name = sheetName
+    dataA.row_id = rowId
+    dataA.col_id = colId
+    dataA.value_char = str(cell)
+    db.session.add(dataA)
+
+  db.session.commit()
+
+  retList = []
+  retList.append(
+    {
+      "fileName" : fileName, 
+      "sheetName" : sheetName, 
+      "rowId" : rowId
+    }
+  )
+
+  # membersArray = members.split(",")
+  # try:
+  #   DutyMembers.query.filter( 
+  #     DutyMembers.project_id==projectId,
+  #     DutyMembers.duty_date ==dutyDate
+  #   ).delete()
+
+  #   for memberId in membersArray:
+  #     if isfloat(memberId):
+  #       dutyMembers = DutyMembers()
+  #       dutyMembers.project_id = projectId
+  #       dutyMembers.duty_date = dutyDate
+  #       dutyMembers.member_id = memberId
+  #       db.session.add(dutyMembers)
+  #       db.session.commit()
+
+  # except:
+  #   ret=1
+
+  return jsonify({'data': json.dumps(retList)})
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 @app.route('/getProjects/')
@@ -1652,7 +1745,8 @@ def login():
       return render_template("login.haml", result=902)
 
   else:
-    return render_template("login.haml")
+    # return render_template("login.haml")
+    return render_template('manager.haml', result=1)
 
 # ログアウトパス
 @app.route('/logout/')
@@ -1663,6 +1757,34 @@ def logout():
   session["redmine_url_key"] = "dummy"
   
   return render_template("login.haml")
+
+
+
+  # for nen in ["h22","h23","h24","h25","h26","h27","h28","h29","h30"]:
+  #   res = requests.get("https://www.soumu.go.jp/iken/zaisei/jyoukyou_shiryou/" + nen + "/index.html")
+  #   soup = BeautifulSoup(res.text, 'html.parser')
+  #   result = soup.select("a[href]")
+  #   link_list =[]
+  #   for link in result:
+  #     href = link.get("href")
+  #     link_list.append(href)
+  #     xl_list = [temp for temp in link_list if temp.endswith('xlsx')]
+
+  #   for xlfile in xl_list:
+  #     # fi = request.files['excelFile']
+  #     res = requests.get("https://www.soumu.go.jp" + xlfile)
+  #     # xl = pd.read_excel(fi, sheet_name=None)
+  #     xl = pd.read_excel(res.content, sheet_name=None)
+  #     fileshubetu = fileShubetu(xl)
+
+  #     if fileshubetu=="sisetu":
+  #       createSisetuMain(xl)
+  #     elif fileshubetu=="sokatu":
+  #       createSokatuMain(xl)
+  #       pass
+  #     else:
+  #       pass
+
 
 
 if __name__ == "__main__":

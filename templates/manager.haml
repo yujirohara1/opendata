@@ -1,0 +1,65 @@
+{% extends 'common.html' %}
+ 
+{% block title %} 管理コンソール {% endblock %}
+
+{% block content %}
+
+%div.container-fluid
+  %div.row
+    %div.col-4
+      %div.fs-3
+        %i.bi.bi-gear-fill
+        オープンデータポータル of Niigata 管理コンソール
+    %div.col-4
+    %div.col-4
+  %hr
+%div.container-fluid
+  %div.d-flex.align-items-start
+    %div.nav.flex-column.nav-pills.me-3#dashboard-tab(role="tablist" aria-orientation="vertical")
+      %button.nav-link.active#dashboard-home-tab(data-bs-toggle="pill" data-bs-target="#dashboard-home" type="button" role="tab" aria-controls="dashboard-home" aria-selected="true")
+        データ収集
+      <button class="nav-link" id="dashboard-profile-tab" data-bs-toggle="pill" data-bs-target="#dashboard-profile" type="button" role="tab" aria-controls="dashboard-profile" aria-selected="false">Profile</button>
+      <button class="nav-link" id="dashboard-messages-tab" data-bs-toggle="pill" data-bs-target="#dashboard-messages" type="button" role="tab" aria-controls="dashboard-messages" aria-selected="false">Messages</button>
+      <button class="nav-link" id="dashboard-settings-tab" data-bs-toggle="pill" data-bs-target="#dashboard-settings" type="button" role="tab" aria-controls="dashboard-settings" aria-selected="false">Settings</button>
+    %div.tab-content.container-fluid#dashboard-tabContent
+      %div.tab-pane.fade.active.show#dashboard-home(role="tabpanel" aria-labelledby="dashboard-home-tab")
+        %div.row
+          %div.col-auto
+            %input.form-control#inpFileImport(type="file")
+          %div.col-auto
+            %a#btnFileImport.btn.btn-dark.btn-sm(href="#" role="button")
+              解析開始
+          %div.col-auto
+            %div.alert-messages#msgFileImport
+              &nbsp;
+        %div.row
+          %div.col-auto
+            %div.alert-messages#msgFileImportDescribe
+              &nbsp;
+        %div.row
+          %div.col-4
+            %div#divAssignedTableArea(style="text-align:center; vertical-align:middle")
+
+      <div class="tab-pane fade" id="dashboard-profile" role="tabpanel" aria-labelledby="dashboard-profile-tab">
+        <p><strong>This is some placeholder content the Profile tab's associated content.</strong> Clicking another tab will toggle the visibility of this one for the next. The tab JavaScript swaps classes to control the content visibility and styling. You can use it with tabs, pills, and any other <code>.nav</code>-powered navigation.</p>
+      </div>
+
+      <div class="tab-pane fade" id="dashboard-messages" role="tabpanel" aria-labelledby="dashboard-messages-tab">
+        <p><strong>This is some placeholder content the Messages tab's associated content.</strong> Clicking another tab will toggle the visibility of this one for the next. The tab JavaScript swaps classes to control the content visibility and styling. You can use it with tabs, pills, and any other <code>.nav</code>-powered navigation.</p>
+      </div>
+
+      <div class="tab-pane fade" id="dashboard-settings" role="tabpanel" aria-labelledby="dashboard-settings-tab">
+        <p><strong>This is some placeholder content the Settings tab's associated content.</strong> Clicking another tab will toggle the visibility of this one for the next. The tab JavaScript swaps classes to control the content visibility and styling. You can use it with tabs, pills, and any other <code>.nav</code>-powered navigation.</p>
+      </div>
+
+{% endblock %}
+
+{% block scripts %}
+  <script src="../static/holidays/lib/japanese-holidays.min.js"></script>
+  <script src="../static/main/js/constants.js"></script>
+  <script src="../static/main/js/manager.js"></script>
+
+  
+{% endblock  %}
+
+
