@@ -1,0 +1,38 @@
+-extends "common.html"
+
+{% block title %} PKG-MODEL {% endblock %}
+
+{% block content %}
+%div.container-fluid
+  %div.row
+    %div.container-fluid
+      ユーザID と APIKEY の組合せでサインインしてください。
+
+  %form(action="/" method="POST")
+    %div.row
+      %div.col-auto
+        %div.input-group.input-group-sm.mb-3
+          %span.input-group-text
+            UserID
+          %input.form-control(type="text" name="user_nm")
+      %div.col-auto
+        %div.input-group.input-group-sm.mb-3
+          %span.input-group-text
+            API-KEY
+          %input.form-control(type="password" name="api_key")
+      %div.col-auto
+        %input.btn.btn-dark.btn-sm#btnLogin(type="submit" value="サインイン")
+      %div.col-auto
+        {% if result == 901 %}
+          <p style="font-weight:bold; color:#4d4d4d; font-size:16px">UserID または API-KEY が違います。</p>
+        {% elif result == 902 %}
+          <p style="font-weight:bold; color:#4d4d4d; font-size:16px">UserID または API-KEY が違います。</p>
+        {% endif %}　
+
+{% endblock %}
+
+{% block scripts %}
+
+<script src="../static/main/js/logintop.js"></script>
+
+{% endblock  %}
