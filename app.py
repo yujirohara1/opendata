@@ -1533,6 +1533,7 @@ def getRandomKey():
 @app.route('/uploadFiles',methods=["PUT"])
 def uploadFiles():
   files = request.files['excelFile']
+  filenameOrg = files.filename
   idx = len(files.filename.split("."))-1
   extention = files.filename.split(".")[idx]
   filename = getRandomKey() + "." + extention
@@ -1549,15 +1550,16 @@ def uploadFiles():
         "colSize":str(xlFile[sh].values.shape[1]),
         "sheetIdx":shidx,
         "sheetName":sh,
-        "fileName":filename
+        "fileName":filename,
+        "fileNameOrg":filenameOrg
       }
     )
 
   return jsonify({'data': json.dumps(retList)})
 
 
-@app.route('/collectSheetData/<fileName>/<sheetIdx>/<sheetName>/<rowId>')
-def collectSheetData(fileName, sheetIdx, sheetName, rowId):
+@app.route('/collectSheetData/<fileName>/<fileNameOrg>/<sheetIdx>/<sheetName>/<rowId>')
+def collectSheetData(fileName, fileNameOrg, sheetIdx, sheetName, rowId):
   sheet = pd.read_excel("tmp/"+fileName, sheetName)
   colId = 0
 
@@ -1570,7 +1572,9 @@ def collectSheetData(fileName, sheetIdx, sheetName, rowId):
     colId = colId + 1
     # a = str(cell)
     dataA = DataA()
-    dataA.file_key = fileName
+    dataA.file_key = fileName.split(".")[0]
+    dataA.file_name = fileNameOrg
+    dataA.file_name_org = fileNameOrg
     dataA.sheet_idx = sheetIdx
     dataA.sheet_name = sheetName
     dataA.row_id = rowId
@@ -1584,6 +1588,7 @@ def collectSheetData(fileName, sheetIdx, sheetName, rowId):
   retList.append(
     {
       "fileName" : fileName, 
+      "fileNameOrg" : fileNameOrg, 
       "sheetIdx" : sheetIdx, 
       "sheetName" : sheetName, 
       "rowId" : rowId
@@ -1615,6 +1620,36 @@ def collectSheetData(fileName, sheetIdx, sheetName, rowId):
 
 
 
+
+
+
+
+@app.route('/getFileNameList')
+def getFileNameList():
+  sql = ""
+  sql = sql + "    select                     "
+  sql = sql + "        file_name              "
+  sql = sql + "        , file_name_org        "
+  sql = sql + "        , file_key             "
+  sql = sql + "    from                       "
+  sql = sql + "        v_file_name            "
+  sql = sql + "    order by                   "
+  sql = sql + "        file_key desc          "
+    
+  datalist = []
+  resultset=[]
+  datalist = db.session.execute(text(sql)).fetchall()
+
+  for d in datalist:
+    resultset.append(
+      {
+        "file_name":d["file_name"],
+        "file_name_org":d["file_name_org"],
+        "file_key":d["file_key"],
+      }
+    )
+
+  return jsonify({'data': json.dumps(resultset,default=decimal_default_proc)})
 
 
 

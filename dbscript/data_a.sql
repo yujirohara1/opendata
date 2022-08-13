@@ -2,6 +2,9 @@ drop table data_a;
 
 create table data_a (
     file_key varchar(1000),
+    file_name_org varchar(1000),
+    file_name varchar(1000),
+    sheet_idx integer,
     sheet_name varchar(1000),
     row_id int,
     col_id integer,
@@ -20,7 +23,7 @@ ALTER TABLE data_a DROP CONSTRAINT data_a_prkey;
 ALTER TABLE ONLY data_a
     ADD CONSTRAINT data_a_prkey PRIMARY KEY (
        file_key,
-       sheet_name,
+       sheet_idx,
        row_id,
        col_id   
     );

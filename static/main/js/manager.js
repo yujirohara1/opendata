@@ -22,10 +22,10 @@ document.getElementById("btnFileImport").addEventListener('click', function() {
   .then(jsonData => {
     var list = JSON.parse(jsonData.data);
     document.getElementById("msgFileImportDescribe").innerText = list.length + "シートで構成されるExcelファイルを検出しました。";
-    destroyTableLoading("divAssignedTableArea");
+    destroyTableLoading("divFileImportTableArea");
     var hdText = ["シート名", "列数", "行数", "収集", "状態"];
     var hdColWidth = ["45%","10%","10%","15%","20%"];
-    var tableId = initTable("divAssignedTableArea", hdText, hdColWidth,5);
+    var tableId = initTable("divFileImportTableArea", hdText, hdColWidth,5);
     var tbody = document.getElementById(tableId+"Body");
 
     for(let i in list){
@@ -40,7 +40,7 @@ document.getElementById("btnFileImport").addEventListener('click', function() {
       td3.innerText = list[i].rowSize; // "a"; //list[i].user_name=="" ? list[i].assigned_to:list[i].user_name;
       td5.innerText = "";
       td5.id = "tdImportStatus_" + i;
-      td4.appendChild(buttonHtmlCollectData(list[i].fileName, list[i].sheetIdx, list[i].sheetName, list[i].rowSize, td5.id));
+      td4.appendChild(buttonHtmlCollectData(list[i].fileName, list[i].fileNameOrg, list[i].sheetIdx, list[i].sheetName, list[i].rowSize, td5.id));
       td1.classList.add("tdcell-left");
       td2.classList.add("tdcell-center");
       td3.classList.add("tdcell-center");
@@ -59,11 +59,84 @@ document.getElementById("btnFileImport").addEventListener('click', function() {
   })
   .catch(error => { console.log(error); });
 
-  createTableLoading("divAssignedTableArea","担当者IDごとに集計しています・・・")
+  createTableLoading("divFileImportTableArea","ファイルを解析しています・・・")
 
   document.getElementById('btnFileImport').classList.add("disabled");
 
 });
+
+
+
+
+let targets = document.querySelectorAll("[id^='dashboard-tab']"); //' #divGraphArea *');
+targets.forEach(target => {
+  target.addEventListener("shown.bs.tab", function (event) {
+
+    if(event.target.id == "dashboard-DataManage-tab"){
+      //createUserNameTable();
+      createFileNameTable();
+    }// else if(event.target.id == "vTabSetting-AA"){
+    //   //getRealMaxIssueId();
+    //   document.getElementById("btnGetRealMaxNo").click();
+    //   document.getElementById("btnGetMaxNo").click();
+    //   ;
+    // } else if(event.target.id == "vTabSetting-CC"){
+    //   createOsEnvironTable();
+    // } else if(event.target.id == "vTabSetting-DD"){
+    //   createCustomFieldDefineArea()
+    // } else if(event.target.id == "vTabSetting-EE"){ //当番表
+    //   createDutyMemberScheduleTable();
+    // } else {
+    //   //alert(event.target.id);
+    //   return;
+    // }
+  });
+});
+
+/*
+|| プロジェクト設定カンバス　２つ目　ユーザ情報タブ
+*/
+function createFileNameTable(){
+  //var projectId = document.getElementById("selectProjectSetting").value;
+  createTableLoading("divFileListTableArea","ファイル名リストを作成中・・・")
+
+  fetch('/getFileNameList' , {
+    method: 'GET',
+    'Content-Type': 'application/json'
+  })
+  .then(res => res.json())
+  .then(jsonData => {
+    var list = JSON.parse(jsonData.data);
+    destroyTableLoading("divFileListTableArea");
+
+    //document.getElementById("divLabelProcessing2").innerText = jsonData.returnStatus; //list[0].issue_id;
+
+    var hdText = ["ファイル名", "キー"];
+    var hdColWidth = ["50%","50%"];
+    var tableId = initTable("divFileListTableArea", hdText, hdColWidth,3.5);
+    var tbody = document.getElementById(tableId+"Body");
+
+    for(let i in list){
+      var trow = document.createElement('tr');
+      var td1 = document.createElement('td');
+      var td2 = document.createElement('td');
+      td1.innerText = list[i].file_name;
+      td2.innerText = list[i].file_key;
+      td1.classList.add("tdcell-left");
+      td2.classList.add("tdcell-left");
+      trow.appendChild(td1);
+      trow.appendChild(td2);
+      tbody.appendChild(trow);
+    }
+  })
+  .catch(error => { 
+    //document.getElementById("divLabelProcessing0").innerText = error;
+    //openErrorMessageDialog(error);
+    console.log(error)
+  });
+}
+  
+
 
 
 //取り込みファイルを指定
@@ -179,7 +252,7 @@ function setAttributes(dom, str){
 
 
 
-function buttonHtmlCollectData(fileName, sheetIdx, sheetName, rowSize, statusObjId){
+function buttonHtmlCollectData(fileName, fileNameOrg, sheetIdx, sheetName, rowSize, statusObjId){
   //%a#btnGetMaxNo.btn.btn-dark.btn-sm(type="button")
   var btn = document.createElement('a');
   btn.classList.add("btn","btn-primary","btn-sm");
@@ -192,14 +265,14 @@ function buttonHtmlCollectData(fileName, sheetIdx, sheetName, rowSize, statusObj
 
   btn.addEventListener('click', function() {
     event.target.classList.add("disabled");
-    collectSheetData(fileName, sheetIdx, sheetName, rowSize, statusObjId, 0);
+    collectSheetData(fileName, fileNameOrg, sheetIdx, sheetName, rowSize, statusObjId, 0);
     
   });
   return btn;
 }
 
-function collectSheetData(fileName, sheetIdx, sheetName, rowSize, statusObjId, rowId){
-  fetch('/collectSheetData/' + fileName + "/" + sheetIdx + "/" + sheetName + "/" + rowId, {
+function collectSheetData(fileName, fileNameOrg, sheetIdx, sheetName, rowSize, statusObjId, rowId){
+  fetch('/collectSheetData/' + fileName + "/" + fileNameOrg + "/" + sheetIdx + "/" + sheetName + "/" + rowId, {
     method: 'GET',
     'Content-Type': 'application/json'
   })
@@ -211,7 +284,7 @@ function collectSheetData(fileName, sheetIdx, sheetName, rowSize, statusObjId, r
     if(list[0].rowId >= (rowSize-1)){
       return;
     }else{
-      collectSheetData(list[0].fileName, list[0].sheetIdx, list[0].sheetName, rowSize, statusObjId, Number(list[0].rowId)+1);
+      collectSheetData(list[0].fileName, list[0].fileNameOrg, list[0].sheetIdx, list[0].sheetName, rowSize, statusObjId, Number(list[0].rowId)+1);
     }
     // if(value==0){
     //   SetAllDisabledDutyList();
