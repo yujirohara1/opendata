@@ -40,6 +40,11 @@ table.dataTable thead tr {
     background-color: #00d4ff99 !important;
 }
 
+.row_header{
+    color:white !important;
+    background-color: black !important;
+}
+
 #rightClickMenu.show {
     display: block;
 }

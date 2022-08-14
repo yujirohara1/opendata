@@ -247,10 +247,13 @@ function createDataPreviewTable(fileKey, sheetIdx){
 
       for(let c=1; c<=colSize; c++){
         var td1 = document.createElement('td');
-        var tmp = list.filter(row=> row["row_id"] ==r).filter(row=> row["col_id"] ==c).map(col => col["value_char"]);
+        var tmp = list.filter(row=> row["row_id"] ==r).filter(row=> row["col_id"] ==c);
         if(tmp.length ==1){
-          td1.innerText = tmp[0];
+          td1.innerText = tmp[0].value_char;
           td1.style.fontSize = "9pt";
+          if(tmp[0].is_row_header=="Y" || tmp[0].is_col_header=="Y"){
+            td1.classList.add("row_header");
+          }
         }
         trow.appendChild(td1);
       }
@@ -411,20 +414,52 @@ function setAttributes(dom, str){
 
 
 document.getElementById("contextMenuDeleteRow").addEventListener('click', function() {
-  // alert(1);
-  var table1 = document.getElementById("htmlTableFileListTableAreaBody");
-  var table2 = document.getElementById("htmlTableSheetListTableAreaBody");
-  var table3 = document.getElementById("htmlTableDataPreviewTableAreaBody");
-  var fileKey = table1.querySelector(".RowSelected").cells[1].innerText;
-  var sheetIdx = table2.querySelector(".RowSelected").cells[0].innerText;
-  var collIdx = table3.querySelector(".rightClickCellSelected").cellIndex+1;
-  var rowIdx = table3.querySelector(".rightClickCellSelected").parentElement.rowIndex-1;
-  deleteRowOrColumn(fileKey, sheetIdx, rowIdx, collIdx, "R");
+  var array = getUpdateKeys();
+  deleteRowOrColumn(array.fileKey, array.sheetIdx, array.rowIdx, array.collIdx, "R");
 });
 
 
 document.getElementById("contextMenuDeleteCol").addEventListener('click', function() {
-  // alert(1);
+  var array = getUpdateKeys();
+  deleteRowOrColumn(array.fileKey, array.sheetIdx, array.rowIdx, array.collIdx, "C");
+});
+
+
+
+document.getElementById("contextMenuUpdateRowheaderY").addEventListener('click', function() {
+  var array = getUpdateKeys();
+  updateHeaderY(array.fileKey, array.sheetIdx, array.rowIdx, array.collIdx, "R");
+  
+});
+
+
+document.getElementById("contextMenuUpdateColheaderY").addEventListener('click', function() {
+  var array = getUpdateKeys();
+  updateHeaderY(array.fileKey, array.sheetIdx, array.rowIdx, array.collIdx, "C");
+  
+});
+
+
+function updateHeaderY(fileKey, sheetIdx, rowIdx, collIdx, direction){
+  fetch('/updateHeaderY/' + fileKey + "/" + sheetIdx + "/" + rowIdx + "/" + collIdx + "/" + direction, {
+    method: 'GET',
+    'Content-Type': 'application/json'
+  })
+  .then(res => res.json())
+  .then(jsonData => {
+    var list = JSON.parse(jsonData.data);
+    //alert(list[0]);
+    createDataPreviewTable(fileKey,sheetIdx);
+
+  })
+  .catch(error => { 
+    console.log(error)
+  });
+
+}
+
+
+function getUpdateKeys(){
   var table1 = document.getElementById("htmlTableFileListTableAreaBody");
   var table2 = document.getElementById("htmlTableSheetListTableAreaBody");
   var table3 = document.getElementById("htmlTableDataPreviewTableAreaBody");
@@ -432,9 +467,14 @@ document.getElementById("contextMenuDeleteCol").addEventListener('click', functi
   var sheetIdx = table2.querySelector(".RowSelected").cells[0].innerText;
   var collIdx = table3.querySelector(".rightClickCellSelected").cellIndex+1;
   var rowIdx = table3.querySelector(".rightClickCellSelected").parentElement.rowIndex-1;
-  deleteRowOrColumn(fileKey, sheetIdx, rowIdx, collIdx, "C");
-});
 
+  return {
+    "fileKey":fileKey,
+    "sheetIdx":sheetIdx,
+    "collIdx":collIdx,
+    "rowIdx":rowIdx
+  }
+}
 
 function deleteRowOrColumn(fileKey, sheetIdx, rowIdx, collIdx, direction){
   fetch('/deleteRowOrColumn/' + fileKey + "/" + sheetIdx + "/" + rowIdx + "/" + collIdx + "/" + direction, {

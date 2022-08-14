@@ -99,8 +99,8 @@ def load_user(user_id):
   login_user(uuser)
   return uuser
 
-db_uri = "postgresql://postgres:yjrhr1102@localhost:5432/newdb3" #開発用aa
-# db_uri = os.environ.get('DATABASE_URL') #本番用HEROKU_POSTGRESQL_COBALTHEROKU_POSTGRESQL_DIANA_URL
+# db_uri = "postgresql://postgres:yjrhr1102@localhost:5432/newdb3" #開発用aa
+db_uri = os.environ.get('DATABASE_URL') #本番用HEROKU_POSTGRESQL_COBALTHEROKU_POSTGRESQL_DIANA_URL
 app.config['SQLALCHEMY_DATABASE_URI'] = db_uri 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -1581,6 +1581,8 @@ def collectSheetData(fileName, fileNameOrg, sheetIdx, sheetName, rowId):
     dataA.row_id = rowId
     dataA.col_id = colId
     dataA.value_char = str(cell)
+    dataA.is_row_header = "N"
+    dataA.is_col_header = "N"
     db.session.add(dataA)
 
   db.session.commit()
@@ -1632,6 +1634,8 @@ def getSheetData(fileKey, sheetIdx):
   sql = sql + "        row_id                   "
   sql = sql + "        , col_id                 "
   sql = sql + "        , value_char             "
+  sql = sql + "        , is_row_header          "
+  sql = sql + "        , is_col_header          "
   sql = sql + "    from                         "
   sql = sql + "        data_a                   "
   sql = sql + "    where                        "
@@ -1650,12 +1654,32 @@ def getSheetData(fileKey, sheetIdx):
       {
         "row_id":d["row_id"],
         "col_id":d["col_id"],
+        "is_row_header":d["is_row_header"],
+        "is_col_header":d["is_col_header"],
         "value_char":d["value_char"],
       }
     )
 
   return jsonify({'data': json.dumps(resultset,default=decimal_default_proc)})
 
+
+
+@app.route('/updateHeaderY/<fileKey>/<sheetIdx>/<rowIdx>/<collIdx>/<direction>')
+def updateHeaderY(fileKey, sheetIdx, rowIdx, collIdx, direction):
+
+  if direction == "R":
+    dataAs = DataA.query.filter(DataA.file_key==fileKey, DataA.sheet_idx==sheetIdx, DataA.row_id == rowIdx).all()
+    for dataA in dataAs:
+      dataA.is_row_header = 'Y'
+
+  if direction == "C":
+    dataAs = DataA.query.filter(DataA.file_key==fileKey, DataA.sheet_idx==sheetIdx, DataA.col_id == collIdx).all()
+    for dataA in dataAs:
+      dataA.is_col_header = 'Y'
+
+  db.session.commit()
+
+  return jsonify({'data': 1})
 
 
 @app.route('/deleteRowOrColumn/<fileKey>/<sheetIdx>/<rowIdx>/<collIdx>/<direction>')

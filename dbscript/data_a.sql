@@ -13,7 +13,9 @@ create table data_a (
     value_char varchar(1000),
     value_num int,
     value_date date,
-    info varchar(1000)
+    info varchar(1000),
+    is_row_header varchar(1),
+    is_col_header varchar(1)
 );
 
 

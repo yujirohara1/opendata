@@ -23,6 +23,8 @@ class DataA(db.Model):
     value_num      = db.Column(db.Integer, primary_key=False) 
     value_date     = db.Column(db.Date, nullable=False) 
     info           = db.Column(db.String(), primary_key=False) 
+    is_row_header  = db.Column(db.String(), primary_key=False) 
+    is_col_header  = db.Column(db.String(), primary_key=False) 
 
 class DataASchema(ma.SQLAlchemyAutoSchema):
       class Meta:
