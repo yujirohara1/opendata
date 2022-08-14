@@ -1576,7 +1576,8 @@ def collectSheetData(fileName, fileNameOrg, sheetIdx, sheetName, rowId):
     dataA.file_name = fileNameOrg
     dataA.file_name_org = fileNameOrg
     dataA.sheet_idx = sheetIdx
-    dataA.sheet_name = sheetName
+    dataA.sheet_name_org = sheetName
+    dataA.data_name = sheetName
     dataA.row_id = rowId
     dataA.col_id = colId
     dataA.value_char = str(cell)
@@ -1621,6 +1622,97 @@ def collectSheetData(fileName, fileNameOrg, sheetIdx, sheetName, rowId):
 
 
 
+
+
+
+@app.route('/getSheetData/<fileKey>/<sheetIdx>')
+def getSheetData(fileKey, sheetIdx):
+  sql = ""
+  sql = sql + "    select                       "
+  sql = sql + "        row_id                   "
+  sql = sql + "        , col_id                 "
+  sql = sql + "        , value_char             "
+  sql = sql + "    from                         "
+  sql = sql + "        data_a                   "
+  sql = sql + "    where                        "
+  sql = sql + "        file_key = '" + fileKey + "' and "
+  sql = sql + "        sheet_idx = " + sheetIdx + " "
+  sql = sql + "    order by                   "
+  sql = sql + "        row_id asc,            "
+  sql = sql + "        col_id asc             "
+    
+  datalist = []
+  resultset=[]
+  datalist = db.session.execute(text(sql)).fetchall()
+
+  for d in datalist:
+    resultset.append(
+      {
+        "row_id":d["row_id"],
+        "col_id":d["col_id"],
+        "value_char":d["value_char"],
+      }
+    )
+
+  return jsonify({'data': json.dumps(resultset,default=decimal_default_proc)})
+
+
+
+@app.route('/updateSheetDataName/<fileKey>/<sheetIdx>/<DataNameValue>')
+def updateSheetDataName(fileKey, sheetIdx, DataNameValue):
+  dataAs = DataA.query.filter(DataA.file_key==fileKey, DataA.sheet_idx==sheetIdx).all()
+  for dataA in dataAs:
+    dataA.data_name = DataNameValue
+
+  db.session.commit()
+  # EnvVariable.query.filter( 
+  #   EnvVariable.pid==projectId,
+  #   EnvVariable.key=="userName",
+  #   EnvVariable.code==userId
+  # ).delete()
+
+  # envvariable = EnvVariable()
+  # envvariable.pid = projectId
+  # envvariable.key = "userName"
+  # envvariable.code = userId
+  # envvariable.value = ret
+  # db.session.add(envvariable)
+
+  # db.session.commit()
+
+  return jsonify({'data': 1})
+
+
+@app.route('/getSheetNameList/<fileKey>')
+def getSheetNameList(fileKey):
+  sql = ""
+  sql = sql + "    select                     "
+  sql = sql + "        sheet_idx              "
+  sql = sql + "        , sheet_name_org       "
+  sql = sql + "        , data_name            "
+  sql = sql + "        , file_key             "
+  sql = sql + "    from                       "
+  sql = sql + "        v_sheet_name           "
+  sql = sql + "    where                      "
+  sql = sql + "        file_key = '" + fileKey + "' "
+  sql = sql + "    order by                   "
+  sql = sql + "        sheet_idx asc          "
+    
+  datalist = []
+  resultset=[]
+  datalist = db.session.execute(text(sql)).fetchall()
+
+  for d in datalist:
+    resultset.append(
+      {
+        "sheet_idx":d["sheet_idx"],
+        "sheet_name_org":d["sheet_name_org"],
+        "data_name":d["data_name"],
+        "file_key":d["file_key"],
+      }
+    )
+
+  return jsonify({'data': json.dumps(resultset,default=decimal_default_proc)})
 
 
 

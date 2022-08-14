@@ -1,5 +1,6 @@
 window.onload = function(){
-  //btnFileImport
+  createFileNameTable();
+  
   document.getElementById("btnFileImport").classList.add("disabled");
 }
 
@@ -71,30 +72,14 @@ document.getElementById("btnFileImport").addEventListener('click', function() {
 let targets = document.querySelectorAll("[id^='dashboard-tab']"); //' #divGraphArea *');
 targets.forEach(target => {
   target.addEventListener("shown.bs.tab", function (event) {
-
     if(event.target.id == "dashboard-DataManage-tab"){
-      //createUserNameTable();
       createFileNameTable();
-    }// else if(event.target.id == "vTabSetting-AA"){
-    //   //getRealMaxIssueId();
-    //   document.getElementById("btnGetRealMaxNo").click();
-    //   document.getElementById("btnGetMaxNo").click();
-    //   ;
-    // } else if(event.target.id == "vTabSetting-CC"){
-    //   createOsEnvironTable();
-    // } else if(event.target.id == "vTabSetting-DD"){
-    //   createCustomFieldDefineArea()
-    // } else if(event.target.id == "vTabSetting-EE"){ //当番表
-    //   createDutyMemberScheduleTable();
-    // } else {
-    //   //alert(event.target.id);
-    //   return;
-    // }
+    }
   });
 });
 
 /*
-|| プロジェクト設定カンバス　２つ目　ユーザ情報タブ
+|| 
 */
 function createFileNameTable(){
   //var projectId = document.getElementById("selectProjectSetting").value;
@@ -118,6 +103,11 @@ function createFileNameTable(){
 
     for(let i in list){
       var trow = document.createElement('tr');
+      trow.addEventListener('click', function() {
+        //alert(1);
+        tRowSetColor(event.target,tableId);
+        createSheetNameTable(list[i].file_key);
+      });
       var td1 = document.createElement('td');
       var td2 = document.createElement('td');
       td1.innerText = list[i].file_name;
@@ -138,6 +128,147 @@ function createFileNameTable(){
   
 
 
+function createSheetNameTable(fileKey){
+  //var projectId = document.getElementById("selectProjectSetting").value;
+  createTableLoading("divSheetListTableArea","シート名リストを作成中・・・")
+  fetch('/getSheetNameList/' + fileKey , {
+    method: 'GET',
+    'Content-Type': 'application/json'
+  })
+  .then(res => res.json())
+  .then(jsonData => {
+    var list = JSON.parse(jsonData.data);
+    destroyTableLoading("divSheetListTableArea");
+
+    //document.getElementById("divLabelProcessing2").innerText = jsonData.returnStatus; //list[0].issue_id;
+
+    var hdText = ["#", "シート名", "設定データ名"];
+    var hdColWidth = ["10%","40%","50%"];
+    var tableId = initTable("divSheetListTableArea", hdText, hdColWidth,3.5);
+    var tbody = document.getElementById(tableId+"Body");
+
+    for(let i in list){
+      var trow = document.createElement('tr');
+      trow.addEventListener('click', function() {
+        tRowSetColor(event.target,tableId);
+        createDataPreviewTable(list[i].file_key, list[i].sheet_idx);
+      });
+      var td1 = document.createElement('td');
+      var td2 = document.createElement('td');
+      var td3 = document.createElement('td');
+      td1.innerText = list[i].sheet_idx;
+      td2.innerText = list[i].sheet_name_org;
+      td3.innerText = list[i].data_name;
+      td3.addEventListener('click', function() {
+        if(isSelectRow(event.target, tableId,2)){
+          var val = event.target.innerText;
+          event.target.innerText = "";
+          event.target.appendChild(inputHtml(val, event.target, list[i].file_key, list[i].sheet_idx));
+        }
+      });
+      td1.classList.add("tdcell-center");
+      td2.classList.add("tdcell-left");
+      td3.classList.add("tdcell-left");
+      trow.appendChild(td1);
+      trow.appendChild(td2);
+      trow.appendChild(td3);
+      tbody.appendChild(trow);
+    }
+  })
+  .catch(error => { 
+    //document.getElementById("divLabelProcessing0").innerText = error;
+    //openErrorMessageDialog(error);
+    console.log(error)
+  });
+}
+  
+
+
+function createDataPreviewTable(fileKey, sheetIdx){
+  createTableLoading("divDataPreviewTableArea","データプレビューを作成中・・・")
+  fetch('/getSheetData/' + fileKey + '/' + sheetIdx , {
+    method: 'GET',
+    'Content-Type': 'application/json'
+  })
+  .then(res => res.json())
+  .then(jsonData => {
+    var list = JSON.parse(jsonData.data);
+    destroyTableLoading("divDataPreviewTableArea");
+
+    //document.getElementById("divLabelProcessing2").innerText = jsonData.returnStatus; //list[0].issue_id;
+
+    //列数を取得
+    var colSize = Math.max.apply(null,list.filter(r=> r["row_id"] =="0").map(c => c["col_id"]));
+    var rowSize = Math.max.apply(null,list.filter(r=> r["col_id"] =="1").map(c => c["row_id"]));
+    var hdText = list.filter(r=> r["row_id"] =="0").map(c => c["col_id"]); //["#", "シート名"];
+    var hdColWidth = null; //["10%","90%"];
+    var tableId = initTable("divDataPreviewTableArea", hdText, hdColWidth,1);
+    var tbody = document.getElementById(tableId+"Body");
+
+    for(let r=0; r<rowSize; r++){
+      var trow = document.createElement('tr');
+
+      for(let c=1; c<=colSize; c++){
+        var td1 = document.createElement('td');
+        var tmp = list.filter(row=> row["row_id"] ==r).filter(row=> row["col_id"] ==c).map(col => col["value_char"]);
+        if(tmp.length ==1){
+          td1.innerText = tmp[0];
+          td1.style.fontSize = "9pt";
+        }
+        trow.appendChild(td1);
+      }
+      tbody.appendChild(trow);
+    }
+    // for(let i in list){
+    //   var trow = document.createElement('tr');
+    //   var td1 = document.createElement('td');
+    //   var td2 = document.createElement('td');
+    //   td1.innerText = list[i].sheet_idx;
+    //   td2.innerText = list[i].sheet_name;
+    //   td1.classList.add("tdcell-right");
+    //   td2.classList.add("tdcell-left");
+    //   trow.appendChild(td1);
+    //   trow.appendChild(td2);
+    //   tbody.appendChild(trow);
+    // }
+  })
+  .catch(error => { 
+    //document.getElementById("divLabelProcessing0").innerText = error;
+    //openErrorMessageDialog(error);
+    console.log(error)
+  });
+}
+  
+
+function isSelectRow(eventObject, tableId, colIdx){
+  if(eventObject.tagName == "TD"){
+    var table = document.getElementById(tableId);
+    for(let i=0; i<table.rows.length; i++){
+      if(table.rows[i].style.backgroundColor =="rgba(0, 212, 255, 0.6)"){
+        if(table.rows[i].cells[colIdx]==eventObject){
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+function tRowSetColor(eventObject, tableId){
+  var table = document.getElementById(tableId);
+  
+  for(let i=0; i<table.rows.length; i++){
+    table.rows[i].style.backgroundColor = "";
+  }
+
+  var trow = eventObject;
+  if(trow.tagName == "TD"){
+    trow = trow.parentElement;
+  }
+  if(trow.tagName == "TR"){
+    trow.style.backgroundColor = "#00d4ff99";
+  }
+}
 
 //取り込みファイルを指定
 document.getElementById("inpFileImport").addEventListener('change', function() {
@@ -269,6 +400,45 @@ function buttonHtmlCollectData(fileName, fileNameOrg, sheetIdx, sheetName, rowSi
     
   });
   return btn;
+}
+
+function inputHtml(dataName, parentObj, fileKey, sheetIdx){
+  //%a#btnGetMaxNo.btn.btn-dark.btn-sm(type="button")
+  var input = document.createElement('input');
+  input.classList.add("form-control");
+  setAttributes(input,"type,text/dummy,dummy");
+  input.value = dataName;
+  input.id = "inpDataName";
+
+  input.addEventListener('blur', function() {
+    //alert(1);
+    var val = document.getElementById("inpDataName").value;
+    document.getElementById("inpDataName").remove();
+    // event.target.innerText = val;
+    parentObj.innerText = val;
+    // console.log(val);
+    // console.log(fileKey);
+    // console.log(sheetIdx);
+    updateSheetDataName(fileKey, sheetIdx, val);
+    //return;
+  });
+  return input;
+}
+
+function updateSheetDataName(fileKey, SheedIdx, DataNameValue){
+  fetch('/updateSheetDataName/' + fileKey + "/" + SheedIdx + "/" + DataNameValue, {
+    method: 'GET',
+    'Content-Type': 'application/json'
+  })
+  .then(res => res.json())
+  .then(jsonData => {
+    var list = JSON.parse(jsonData.data);
+    //alert(list[0]);
+  })
+  .catch(error => { 
+    console.log(error)
+  });
+
 }
 
 function collectSheetData(fileName, fileNameOrg, sheetIdx, sheetName, rowSize, statusObjId, rowId){

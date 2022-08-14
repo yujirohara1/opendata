@@ -1,11 +1,12 @@
-drop table data_a;
+drop table data_a cascade;
 
 create table data_a (
     file_key varchar(1000),
     file_name_org varchar(1000),
     file_name varchar(1000),
     sheet_idx integer,
-    sheet_name varchar(1000),
+    sheet_name_org varchar(1000),
+    data_name varchar(1000),
     row_id int,
     col_id integer,
     col_key varchar(3),

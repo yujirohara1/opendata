@@ -28,7 +28,18 @@
       %div.tab-pane.fade.active.show#dashboard-DataManage(role="tabpanel" aria-labelledby="dashboard-DataManage-tab")
         %div.row
           %div.col-auto
+            %div
+              登録済みファイルリスト
             %div#divFileListTableArea(style="text-align:center; vertical-align:middle")
+          %div.col-6
+            %div.default-label#lblSheetListTitle
+              シートリスト
+            %div#divSheetListTableArea(style="text-align:center; vertical-align:middle")
+        %div.row
+          %div.col-auto
+            %div.default-label#lblPreviewListTitle
+              データプレビュー
+            %div#divDataPreviewTableArea(style="text-align:center; vertical-align:middle")
 
       %div.tab-pane.fade.show#dashboard-DataImport(role="tabpanel" aria-labelledby="dashboard-DataImport-tab")
         %div.row
