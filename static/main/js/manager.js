@@ -1,4 +1,5 @@
 window.onload = function(){
+
   createFileNameTable();
   
   document.getElementById("btnFileImport").classList.add("disabled");
@@ -107,6 +108,7 @@ function createFileNameTable(){
         //alert(1);
         tRowSetColor(event.target,tableId);
         createSheetNameTable(list[i].file_key);
+        createDataPreviewTable(list[i].file_key,0);
       });
       var td1 = document.createElement('td');
       var td2 = document.createElement('td');
@@ -159,11 +161,13 @@ function createSheetNameTable(fileKey){
       td1.innerText = list[i].sheet_idx;
       td2.innerText = list[i].sheet_name_org;
       td3.innerText = list[i].data_name;
-      td3.addEventListener('click', function() {
-        if(isSelectRow(event.target, tableId,2)){
-          var val = event.target.innerText;
-          event.target.innerText = "";
-          event.target.appendChild(inputHtml(val, event.target, list[i].file_key, list[i].sheet_idx));
+      td3.addEventListener('click', function(e) {
+        if(e.target.tagName == "TD" && e.target.parentElement.classList.length ==1){
+          if(e.target.parentElement.classList[0]=="RowSelected"){
+            var val = event.target.innerText;
+            event.target.innerText = "";
+            event.target.appendChild(inputHtml(val, event.target, list[i].file_key, list[i].sheet_idx));
+          }
         }
       });
       td1.classList.add("tdcell-center");
@@ -183,6 +187,20 @@ function createSheetNameTable(fileKey){
 }
   
 
+//左クリックで非表示に変更
+document.body.addEventListener('click', function () {
+  var menu = document.getElementById("rightClickMenu");
+  if (menu.classList.contains('show')) {
+    //非表示に戻す
+    menu.classList.remove('show');
+  }
+
+  let elements = document.body.getElementsByTagName("td");
+  Array.prototype.forEach.call(elements, function (element) {
+    element.classList.remove("rightClickCellSelected");
+  });
+
+});
 
 function createDataPreviewTable(fileKey, sheetIdx){
   createTableLoading("divDataPreviewTableArea","データプレビューを作成中・・・")
@@ -202,8 +220,26 @@ function createDataPreviewTable(fileKey, sheetIdx){
     var rowSize = Math.max.apply(null,list.filter(r=> r["col_id"] =="1").map(c => c["row_id"]));
     var hdText = list.filter(r=> r["row_id"] =="0").map(c => c["col_id"]); //["#", "シート名"];
     var hdColWidth = null; //["10%","90%"];
-    var tableId = initTable("divDataPreviewTableArea", hdText, hdColWidth,1);
+    var tableId = initTable("divDataPreviewTableArea", hdText, hdColWidth,2);
     var tbody = document.getElementById(tableId+"Body");
+
+    tbody.oncontextmenu = function () { return false; }
+
+    tbody.addEventListener('contextmenu',function(e){
+      //tbody.querySelectorAll("td").classList.remove("rightClickCellSelected");
+      let elements = tbody.getElementsByTagName("td");
+      Array.prototype.forEach.call(elements, function (element) {
+        element.classList.remove("rightClickCellSelected");
+      });
+
+      if(e.target.tagName == "TD"){
+        e.target.classList.add("rightClickCellSelected");
+      }
+      var menu = document.getElementById("rightClickMenu");
+      menu.style.left = e.x + 'px';
+      menu.style.top = e.y + 'px';
+      menu.classList.add("show");
+    });
 
     for(let r=0; r<rowSize; r++){
       var trow = document.createElement('tr');
@@ -238,35 +274,25 @@ function createDataPreviewTable(fileKey, sheetIdx){
     console.log(error)
   });
 }
-  
-
-function isSelectRow(eventObject, tableId, colIdx){
-  if(eventObject.tagName == "TD"){
-    var table = document.getElementById(tableId);
-    for(let i=0; i<table.rows.length; i++){
-      if(table.rows[i].style.backgroundColor =="rgba(0, 212, 255, 0.6)"){
-        if(table.rows[i].cells[colIdx]==eventObject){
-          return true;
-        }
-      }
-    }
-  }
-  return false;
-}
 
 function tRowSetColor(eventObject, tableId){
   var table = document.getElementById(tableId);
   
-  for(let i=0; i<table.rows.length; i++){
-    table.rows[i].style.backgroundColor = "";
-  }
+  // for(let i=0; i<table.rows.length; i++){
+  //   table.rows[i].style.backgroundColor = "";
+  // }
+  let elements = table.getElementsByTagName("tr");
+  Array.prototype.forEach.call(elements, function (element) {
+    element.classList.remove("RowSelected");
+  });
 
   var trow = eventObject;
   if(trow.tagName == "TD"){
     trow = trow.parentElement;
   }
   if(trow.tagName == "TR"){
-    trow.style.backgroundColor = "#00d4ff99";
+    //trow.style.backgroundColor = "#00d4ff99";
+    trow.classList.add("RowSelected");
   }
 }
 
@@ -383,6 +409,53 @@ function setAttributes(dom, str){
 
 
 
+document.getElementById("contextMenuDeleteRow").addEventListener('click', function() {
+  // alert(1);
+  var table1 = document.getElementById("htmlTableFileListTableAreaBody");
+  var table2 = document.getElementById("htmlTableSheetListTableAreaBody");
+  var table3 = document.getElementById("htmlTableDataPreviewTableAreaBody");
+  var fileKey = table1.querySelector(".RowSelected").cells[1].innerText;
+  var sheetIdx = table2.querySelector(".RowSelected").cells[0].innerText;
+  var collIdx = table3.querySelector(".rightClickCellSelected").cellIndex+1;
+  var rowIdx = table3.querySelector(".rightClickCellSelected").parentElement.rowIndex-1;
+  deleteRowOrColumn(fileKey, sheetIdx, rowIdx, collIdx, "R");
+});
+
+
+document.getElementById("contextMenuDeleteCol").addEventListener('click', function() {
+  // alert(1);
+  var table1 = document.getElementById("htmlTableFileListTableAreaBody");
+  var table2 = document.getElementById("htmlTableSheetListTableAreaBody");
+  var table3 = document.getElementById("htmlTableDataPreviewTableAreaBody");
+  var fileKey = table1.querySelector(".RowSelected").cells[1].innerText;
+  var sheetIdx = table2.querySelector(".RowSelected").cells[0].innerText;
+  var collIdx = table3.querySelector(".rightClickCellSelected").cellIndex+1;
+  var rowIdx = table3.querySelector(".rightClickCellSelected").parentElement.rowIndex-1;
+  deleteRowOrColumn(fileKey, sheetIdx, rowIdx, collIdx, "C");
+});
+
+
+function deleteRowOrColumn(fileKey, sheetIdx, rowIdx, collIdx, direction){
+  fetch('/deleteRowOrColumn/' + fileKey + "/" + sheetIdx + "/" + rowIdx + "/" + collIdx + "/" + direction, {
+    method: 'GET',
+    'Content-Type': 'application/json'
+  })
+  .then(res => res.json())
+  .then(jsonData => {
+    var list = JSON.parse(jsonData.data);
+    //alert(list[0]);
+    createDataPreviewTable(fileKey,sheetIdx);
+
+  })
+  .catch(error => { 
+    console.log(error)
+  });
+
+}
+
+
+
+
 function buttonHtmlCollectData(fileName, fileNameOrg, sheetIdx, sheetName, rowSize, statusObjId){
   //%a#btnGetMaxNo.btn.btn-dark.btn-sm(type="button")
   var btn = document.createElement('a');
@@ -425,8 +498,8 @@ function inputHtml(dataName, parentObj, fileKey, sheetIdx){
   return input;
 }
 
-function updateSheetDataName(fileKey, SheedIdx, DataNameValue){
-  fetch('/updateSheetDataName/' + fileKey + "/" + SheedIdx + "/" + DataNameValue, {
+function updateSheetDataName(fileKey, sheetIdx, DataNameValue){
+  fetch('/updateSheetDataName/' + fileKey + "/" + sheetIdx + "/" + DataNameValue, {
     method: 'GET',
     'Content-Type': 'application/json'
   })
@@ -449,9 +522,9 @@ function collectSheetData(fileName, fileNameOrg, sheetIdx, sheetName, rowSize, s
   .then(res => res.json())
   .then(jsonData => {
     var list = JSON.parse(jsonData.data);
-    document.getElementById(statusObjId).innerText = rowId + 1;
+    document.getElementById(statusObjId).innerText = rowId;
     //alert(list[0].rowId);
-    if(list[0].rowId >= (rowSize-1)){
+    if(Number(list[0].rowId) >= Number(rowSize)){
       return;
     }else{
       collectSheetData(list[0].fileName, list[0].fileNameOrg, list[0].sheetIdx, list[0].sheetName, rowSize, statusObjId, Number(list[0].rowId)+1);

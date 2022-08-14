@@ -25,6 +25,35 @@ table.dataTable thead tr {
     font-size:12px;
 }
 
+.rightClickCellSelected{
+    background-color: #00d4ff99 !important;
+}
+
+#rightClickMenu {
+    display:none;
+    position:fixed;
+    left:0px;
+    top:0px;
+}
+
+.RowSelected{
+    background-color: #00d4ff99 !important;
+}
+
+#rightClickMenu.show {
+    display: block;
+}
+
+.list-group-item-contextmenu {
+    position: relative;
+    display: block;
+    padding: .2rem .4rem;
+    color: #212529;
+    text-decoration: none;
+    background-color: #fff;
+    border: .5px solid rgba(0,0,0,.125);
+    font-size: .9rem;
+}
 
 .cell-loading{
     background-image:url(../../../static/image/Iphone-spinner-1.gif); 

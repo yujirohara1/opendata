@@ -1566,7 +1566,7 @@ def collectSheetData(fileName, fileNameOrg, sheetIdx, sheetName, rowId):
   if rowId == "0":
     row = sheet.columns
   else:
-    row = sheet.values[int(rowId)]
+    row = sheet.values[int(rowId)-1]
 
   for cell in row:
     colId = colId + 1
@@ -1657,6 +1657,47 @@ def getSheetData(fileKey, sheetIdx):
   return jsonify({'data': json.dumps(resultset,default=decimal_default_proc)})
 
 
+
+@app.route('/deleteRowOrColumn/<fileKey>/<sheetIdx>/<rowIdx>/<collIdx>/<direction>')
+def deleteRowOrColumn(fileKey, sheetIdx, rowIdx, collIdx, direction):
+  # dataAs = DataA.query.filter(DataA.file_key==fileKey, DataA.sheet_idx==sheetIdx).all()
+  # for dataA in dataAs:
+  #   dataA.data_name = DataNameValue
+
+  # db.session.commit()
+  if direction == "R":
+    DataA.query.filter( 
+      DataA.file_key==fileKey,
+      DataA.sheet_idx==sheetIdx,
+      DataA.row_id==rowIdx
+    ).delete()
+
+    dataAs = DataA.query.filter(DataA.file_key==fileKey, DataA.sheet_idx==sheetIdx, DataA.row_id > rowIdx).all()
+    for dataA in dataAs:
+      dataA.row_id = dataA.row_id-1
+
+  if direction == "C":
+    DataA.query.filter( 
+      DataA.file_key==fileKey,
+      DataA.sheet_idx==sheetIdx,
+      DataA.col_id==collIdx
+    ).delete()
+
+    dataAs = DataA.query.filter(DataA.file_key==fileKey, DataA.sheet_idx==sheetIdx, DataA.col_id > collIdx).all()
+    for dataA in dataAs:
+      dataA.col_id = dataA.col_id-1
+
+  db.session.commit()
+
+  # envvariable = EnvVariable()
+  # envvariable.pid = projectId
+  # envvariable.key = "userName"
+  # envvariable.code = userId
+  # envvariable.value = ret
+  # db.session.add(envvariable)
+
+
+  return jsonify({'data': 1})
 
 @app.route('/updateSheetDataName/<fileKey>/<sheetIdx>/<DataNameValue>')
 def updateSheetDataName(fileKey, sheetIdx, DataNameValue):
