@@ -167,6 +167,7 @@ function createSheetNameTable(fileKey){
             var val = event.target.innerText;
             event.target.innerText = "";
             event.target.appendChild(inputHtml(val, event.target, list[i].file_key, list[i].sheet_idx));
+            inpDataName.focus();
           }
         }
       });
